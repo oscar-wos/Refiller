@@ -27,7 +27,7 @@ public partial class Refiller : BasePlugin, IPluginConfig<RefillerConfig>
         List<CCSPlayerController?> players =
         [
             @event.Attacker,
-            Config.AssistRefill && @event.Attacker != @event.Assister ? @event.Assister : null
+            Config.AssistRefill ? @event.Assister : null
         ];
 
         List<CHandle<CBasePlayerWeapon>> weapons = [];
@@ -38,17 +38,6 @@ public partial class Refiller : BasePlugin, IPluginConfig<RefillerConfig>
                 weapons.AddRange(player!.PlayerPawn!.Value!.WeaponServices!.MyWeapons);
             else if (Config.AmmoRefill == "current")
                 weapons.Add(player!.PlayerPawn!.Value!.WeaponServices!.ActiveWeapon);
-
-            var currentHealth = player!.PlayerPawn.Value!.Health;
-
-            player!.PlayerPawn.Value!.Health = Config.HealthRefill switch
-            {
-                "all" => 100,
-                _ => currentHealth + int.Parse(Config.HealthRefill) >= 100 ? 100 : currentHealth + int.Parse(Config.HealthRefill)
-            };
-
-            if (Config.ArmorRefill)
-                player!.PlayerPawn.Value!.ArmorValue = 100;
         }
 
         Server.NextFrame(() =>
@@ -60,11 +49,28 @@ public partial class Refiller : BasePlugin, IPluginConfig<RefillerConfig>
                 if (weaponData == null)
                     continue;
 
-                Console.WriteLine($"{weaponData.Name}");
-
                 weapon.Value!.Clip1 = weaponData.MaxClip1;
                 weapon.Value!.ReserveAmmo[0] = weaponData.PrimaryReserveAmmoMax;
                 Utilities.SetStateChanged(weapon.Value!.As<CCSWeaponBase>(), "CBasePlayerWeapon", "m_pReserveAmmo");
+            }
+
+            foreach (var player in players.Where(player => player != null && player.IsValid))
+            {
+                var currentHealth = player!.PlayerPawn.Value!.Health;
+
+                player!.PlayerPawn.Value!.Health = Config.HealthRefill switch
+                {
+                    "all" => 100,
+                    _ => currentHealth + int.Parse(Config.HealthRefill) >= 100 ? 100 : currentHealth + int.Parse(Config.HealthRefill)
+                };
+
+                Utilities.SetStateChanged(player!.PlayerPawn.Value!, "CBaseEntity", "m_iHealth");
+
+                if (!Config.ArmorRefill)
+                    continue;
+
+                player!.PlayerPawn.Value!.ArmorValue = 100;
+                Utilities.SetStateChanged(player!.PlayerPawn.Value!, "CCSPlayerPawn", "m_ArmorValue");
             }
         });
 
