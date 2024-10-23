@@ -1,7 +1,6 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
-using Microsoft.Extensions.Logging;
 
 namespace Refiller;
 
@@ -42,7 +41,7 @@ public partial class Refiller : BasePlugin, IPluginConfig<RefillerConfig>
 
         Server.NextFrame(() =>
         {
-            foreach (var weapon in weapons)
+            foreach (var weapon in weapons.Where(w => w != null && w.IsValid))
             {
                 var weaponData = weapon.Value!.As<CCSWeaponBase>().VData;
 
