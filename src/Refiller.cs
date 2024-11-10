@@ -43,7 +43,7 @@ public partial class Refiller : BasePlugin, IPluginConfig<RefillerConfig>
         {
             foreach (var weapon in weapons.Where(w => w != null && w.IsValid))
             {
-                var weaponData = weapon.Value!.As<CCSWeaponBase>().VData;
+                var weaponData = weapon.Value?.As<CCSWeaponBase>().VData;
 
                 if (weaponData == null)
                     continue;
